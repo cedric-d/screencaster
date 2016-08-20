@@ -1,7 +1,9 @@
 #include "screenshotwriter.h"
+#include "utils.h"
 
 #include <QtGlobal>
 #include <QtDebug>
+#include <QFile>
 
 const QString ScreenshotWriter::FILE_PATTERN = "screenshot%1";
 
@@ -11,7 +13,13 @@ ScreenshotWriter::ScreenshotWriter(const QString &outdir,
                                    QObject *parent) :
     ScreenshotOutput(parent), fileFormat(format), curIndex(0)
 {
-    this->filePattern = outdir + '/' + ScreenshotWriter::FILE_PATTERN + '.' + format;
+    QString ext;
+    if (format == "libwebp")
+        ext = "webp";
+    else
+        ext = format;
+
+    this->filePattern = outdir + '/' + ScreenshotWriter::FILE_PATTERN + '.' + ext;
     this->fileQuality = quality.toInt();
 }
 
@@ -21,7 +29,17 @@ void ScreenshotWriter::handleScreenshot(QImage screenshot)
 
     qDebug() << tr("Writing file %1").arg(fileName);
 
-    screenshot.save(fileName, this->fileFormat.toLocal8Bit().constData(), this->fileQuality);
+    if (this->fileFormat == "libwebp") {
+        QFile file(fileName, this);
+        if (!file.open(QIODevice::WriteOnly)) {
+            qCritical() << tr("Failed to open output file: %1").arg(file.errorString());
+        } else {
+            writeImageWebp(screenshot, this->fileQuality, &file);
+            file.close();
+        }
+    } else {
+        screenshot.save(fileName, this->fileFormat.toLocal8Bit().constData(), this->fileQuality);
+    }
 
     this->curIndex++;
 }

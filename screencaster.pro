@@ -2,6 +2,8 @@ QT += gui network widgets
 
 TARGET = screencaster
 
+LIBS += -lwebp
+
 HEADERS += \
     screenshotmaker.h \
     screenshotsender.h \
@@ -10,7 +12,8 @@ HEADERS += \
     screencaster.h \
     screenshotio.h \
     screenshotreader.h \
-    screenshotviewer.h
+    screenshotviewer.h \
+    utils.h
 
 SOURCES += \
     screenshotmaker.cpp \
@@ -20,4 +23,5 @@ SOURCES += \
     screenshotwriter.cpp \
     screencaster.cpp \
     screenshotreader.cpp \
-    screenshotviewer.cpp
+    screenshotviewer.cpp \
+    utils.cpp

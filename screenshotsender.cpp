@@ -1,4 +1,5 @@
 #include "screenshotsender.h"
+#include "utils.h"
 
 #include <QtGlobal>
 #include <QtDebug>
@@ -47,20 +48,30 @@ void ScreenshotSender::error()
 
 void ScreenshotSender::handleScreenshot(QImage screenshot)
 {
+    QImageWriter writer;
     QBuffer img(this);
     img.open(QIODevice::WriteOnly);
-    QImageWriter writer(&img, this->imgFormat.toLocal8Bit());
-    writer.setQuality(this->imgQuality);
-    if (!writer.write(screenshot)) {
-        qCritical() << tr("Failed to create image: %1").arg(writer.errorString());
-        return;
+
+    if (this->imgFormat == "libwebp") {
+        if (!writeImageWebp(screenshot, this->imgQuality, &img)) {
+            qCritical() << tr("Failed to create image");
+            return;
+        }
+    } else {
+        writer.setDevice(&img);
+        writer.setFormat(this->imgFormat.toUtf8());
+        writer.setQuality(this->imgQuality);
+        if (!writer.write(screenshot)) {
+            qCritical() << tr("Failed to create image: %1").arg(writer.errorString());
+            return;
+        }
     }
     img.close();
 
     quint32 imgSize = img.buffer().size();
     QByteArray metadata;
     // store metadata size in upper byte if not handled by the format
-    if (!writer.supportsOption(QImageIOHandler::Description)) {
+    if (!writer.canWrite() || !writer.supportsOption(QImageIOHandler::Description)) {
         QStringList metadataList;
         metadataList.append(screenshot.text("timestamp"));
         metadataList.append(screenshot.text("xpos"));
