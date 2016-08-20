@@ -3,12 +3,12 @@
 
 #include "screenshotmaker.h"
 #include "screenshotio.h"
+#include "screenshotviewer.h"
 
-#include <QGuiApplication>
+#include <QApplication>
 #include <QObject>
-#include <QTimer>
 
-class Screencaster : public QGuiApplication
+class Screencaster : public QApplication
 {
     Q_OBJECT
 
@@ -21,8 +21,6 @@ signals:
 public slots:
 
 private:
-    QTimer timer;
-    ScreenshotMaker * maker;
     ScreenshotOutput * output;
     ScreenshotInput * input;
 };

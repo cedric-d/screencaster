@@ -6,9 +6,11 @@
 #include <QScreen>
 #include <QTime>
 
-ScreenshotMaker::ScreenshotMaker(QObject *parent) :
-    QObject(parent)
+ScreenshotMaker::ScreenshotMaker(const int interval, QObject *parent) :
+    ScreenshotInput(parent)
 {
+    this->timer.setInterval(interval);
+    connect(&this->timer, SIGNAL(timeout()), this, SLOT(shoot()));
 }
 
 void ScreenshotMaker::shoot(bool forceFull)
@@ -75,5 +77,10 @@ void ScreenshotMaker::shoot(bool forceFull)
 
     this->refScreenshot = screenshot;
 
-    emit shot(curScreenshot.image);
+    emit screenshotAvailable(curScreenshot.image);
+}
+
+void ScreenshotMaker::start()
+{
+    this->timer.start();
 }

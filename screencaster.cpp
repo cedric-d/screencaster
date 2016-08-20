@@ -5,7 +5,7 @@
 #include "screenshotwriter.h"
 
 #include <QCommandLineParser>
-#include <QGuiApplication>
+#include <QApplication>
 #include <QStringList>
 
 #include <QtDebug>
@@ -25,10 +25,10 @@ static const QString DEFAULT_FILE_QUALITY = "-1";
 
 
 Screencaster::Screencaster(int & argc, char *argv[]) :
-    QGuiApplication(argc, argv), timer(this), maker(0), output(0), input(0)
+    QApplication(argc, argv), output(0), input(0)
 {
-    QGuiApplication::setApplicationName(APPLICATION_NAME);
-    QGuiApplication::setApplicationVersion(APPLICATION_VERSION);
+    this->setApplicationName(APPLICATION_NAME);
+    this->setApplicationVersion(APPLICATION_VERSION);
 
     QCommandLineParser parser;
     parser.setApplicationDescription(tr("Periodically take screenshots"));
@@ -102,23 +102,21 @@ Screencaster::Screencaster(int & argc, char *argv[]) :
     }
 
     if (this->output) {
-        this->maker = new ScreenshotMaker(this);
+        this->input = new ScreenshotMaker(parser.value(period).toInt(), this);
 
-        connect(&this->timer, SIGNAL(timeout()), this->maker, SLOT(shoot()));
-        connect(this->maker, SIGNAL(shot(QImage)), this->output, SLOT(handleScreenshot(QImage)));
-
-        this->timer.start(parser.value(period).toInt());
-        this->output->start();
     } else {
-        connect(this->input, SIGNAL(finished()), this, SLOT(quit()));
-
-        this->input->start();
+        this->output = new ScreenshotViewer(this);
     }
+
+    connect(this->input, SIGNAL(screenshotAvailable(QImage)), this->output, SLOT(handleScreenshot(QImage)));
+    //connect(this->input, SIGNAL(finished()), this, SLOT(quit()));
+
+    this->input->start();
+    this->output->start();
 }
 
 Screencaster::~Screencaster()
 {
-    delete this->maker;
     delete this->output;
     delete this->input;
 }

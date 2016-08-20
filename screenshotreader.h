@@ -4,7 +4,7 @@
 #include "screenshotio.h"
 
 #include <QObject>
-#include <QStringList>
+#include <QFileInfoList>
 
 class ScreenshotReader : public ScreenshotInput
 {
@@ -23,7 +23,7 @@ signals:
 public slots:
 
 private:
-    QStringList screenshotFiles;
+    QFileInfoList screenshotFileinfos;
 };
 
 #endif // SCREENSHOTREADER_H

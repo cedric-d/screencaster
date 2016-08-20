@@ -2,6 +2,7 @@
 
 #include <QtGlobal>
 #include <QDir>
+#include <QImage>
 
 #include <QtDebug>
 
@@ -11,18 +12,17 @@ ScreenshotReader::ScreenshotReader(const QString &indir,
     ScreenshotInput(parent)
 {
     QDir dir(indir, pattern);
-    this->screenshotFiles = dir.entryList(QDir::Files);
+    this->screenshotFileinfos = dir.entryInfoList(QDir::Files);
 }
 
 void ScreenshotReader::run()
 {
-    for (QStringList::const_iterator it = this->screenshotFiles.begin();
-         it != this->screenshotFiles.end(); ++it)
+    for (QFileInfoList::const_iterator it = this->screenshotFileinfos.begin();
+         it != this->screenshotFileinfos.end(); ++it)
     {
-        qDebug(tr("Reading file %1").arg(*it).toLocal8Bit().constData());
+        qDebug(tr("Reading file %1").arg(it->absoluteFilePath()).toLocal8Bit().constData());
 
-        QImage img(*it);
-        qDebug() << img.text();
+        QImage img(it->absoluteFilePath());
         emit screenshotAvailable(img);
     }
 }

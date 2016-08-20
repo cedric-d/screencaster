@@ -1,9 +1,12 @@
 #ifndef SCREENSHOTMAKER_H
 #define SCREENSHOTMAKER_H
 
+#include "screenshotio.h"
+
 #include <QImage>
 #include <QObject>
 #include <QRect>
+#include <QTimer>
 
 struct Screenshot
 {
@@ -12,20 +15,21 @@ struct Screenshot
     QRect crop;
 };
 
-class ScreenshotMaker : public QObject
+class ScreenshotMaker : public ScreenshotInput
 {
     Q_OBJECT
 
 public:
-    explicit ScreenshotMaker(QObject *parent = 0);
+    explicit ScreenshotMaker(const int interval, QObject *parent = 0);
 
 signals:
-    void shot(QImage screenshot);
 
 public slots:
     void shoot(bool forceFull = false);
+    void start();
 
 private:
+    QTimer timer;
     QImage refScreenshot;
 };
 
