@@ -7,24 +7,30 @@
 #include <QLabel>
 #include <QMainWindow>
 #include <QPixmap>
-#include <QTime>
+#include <QTimer>
 
 class ScreenshotViewer : public ScreenshotOutput
 {
     Q_OBJECT
+
 public:
-    explicit ScreenshotViewer(QObject *parent = 0);
+    explicit ScreenshotViewer(const int interval, QObject *parent = 0);
 
 signals:
 
 public slots:
     void handleScreenshot(QImage screenshot);
+    void displayNextScreenshot();
+
+protected:
 
 private:
     QMainWindow window;
     QLabel *label;
     QPixmap pixmap;
-    QTime lastTimestamp;
+    QTimer timer;
+
+    QList<QImage> queue;
 };
 
 #endif // SCREENSHOTVIEWER_H

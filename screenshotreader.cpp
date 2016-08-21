@@ -3,6 +3,7 @@
 #include <QtGlobal>
 #include <QDir>
 #include <QImage>
+#include <QTimer>
 
 #include <QtDebug>
 
@@ -13,16 +14,21 @@ ScreenshotReader::ScreenshotReader(const QString &indir,
 {
     QDir dir(indir, pattern);
     this->screenshotFileinfos = dir.entryInfoList(QDir::Files);
+
+    QTimer::singleShot(0, this, SLOT(readNextScreenshot()));
 }
 
-void ScreenshotReader::run()
+void ScreenshotReader::readNextScreenshot()
 {
-    for (QFileInfoList::const_iterator it = this->screenshotFileinfos.begin();
-         it != this->screenshotFileinfos.end(); ++it)
-    {
-        qDebug(tr("Reading file %1").arg(it->absoluteFilePath()).toLocal8Bit().constData());
+    if (this->screenshotFileinfos.empty())
+        return;
 
-        QImage img(it->absoluteFilePath());
-        emit screenshotAvailable(img);
-    }
+    const QFileInfo & curFile = this->screenshotFileinfos.takeFirst();
+
+    qDebug(tr("Reading file %1").arg(curFile.absoluteFilePath()).toLocal8Bit().constData());
+
+    QImage img(curFile.absoluteFilePath());
+    emit screenshotAvailable(img);
+
+    QTimer::singleShot(0, this, SLOT(readNextScreenshot()));
 }

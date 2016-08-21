@@ -103,16 +103,12 @@ Screencaster::Screencaster(int & argc, char *argv[]) :
 
     if (this->output) {
         this->input = new ScreenshotMaker(parser.value(period).toInt(), this);
-
     } else {
-        this->output = new ScreenshotViewer(this);
+        this->output = new ScreenshotViewer(parser.value(period).toInt(), this);
     }
 
     connect(this->input, SIGNAL(screenshotAvailable(QImage)), this->output, SLOT(handleScreenshot(QImage)));
     //connect(this->input, SIGNAL(finished()), this, SLOT(quit()));
-
-    this->input->start();
-    this->output->start();
 }
 
 Screencaster::~Screencaster()

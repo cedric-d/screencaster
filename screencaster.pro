@@ -20,5 +20,4 @@ SOURCES += \
     screenshotwriter.cpp \
     screencaster.cpp \
     screenshotreader.cpp \
-    screenshotio.cpp \
     screenshotviewer.cpp

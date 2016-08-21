@@ -26,7 +26,8 @@ signals:
 
 public slots:
     void shoot(bool forceFull = false);
-    void start();
+
+protected:
 
 private:
     QTimer timer;

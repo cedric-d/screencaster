@@ -2,17 +2,32 @@
 
 #include <QPainter>
 #include <QPoint>
-#include <QThread>
+#include <QTime>
 
-ScreenshotViewer::ScreenshotViewer(QObject *parent) :
+ScreenshotViewer::ScreenshotViewer(const int interval, QObject *parent) :
     ScreenshotOutput(parent), window(0), label(new QLabel(&this->window))
 {
     this->window.setCentralWidget(this->label);
     this->window.showFullScreen();
+
+    connect(&this->timer, SIGNAL(timeout()), this, SLOT(displayNextScreenshot()));
+    this->timer.start(interval);
 }
 
 void ScreenshotViewer::handleScreenshot(QImage screenshot)
 {
+    this->queue.append(screenshot);
+}
+
+void ScreenshotViewer::displayNextScreenshot()
+{
+    if (this->queue.isEmpty())
+        return;
+
+    const QImage & screenshot = this->queue.takeFirst();
+
+    qDebug(tr("Displaying screenshot taken at %1").arg(screenshot.text("timestamp")).toLocal8Bit().constData());
+
     if (this->pixmap.isNull()) {
         this->pixmap = QPixmap::fromImage(screenshot);
     } else {
@@ -21,14 +36,4 @@ void ScreenshotViewer::handleScreenshot(QImage screenshot)
         painter.drawImage(target, screenshot, screenshot.rect());
     }
     this->label->setPixmap(this->pixmap);
-
-    const QTime newTimestamp = QTime::fromString(screenshot.text("timestamp"), "HH:mm:ss.zzz");
-    if (newTimestamp.isValid()) {
-        if (!this->lastTimestamp.isNull()) {
-            QThread::msleep(this->lastTimestamp.msecsTo(newTimestamp));
-        }
-        this->lastTimestamp = newTimestamp;
-    } else if (!this->lastTimestamp.isNull()) {
-        this->lastTimestamp = QTime();
-    }
 }

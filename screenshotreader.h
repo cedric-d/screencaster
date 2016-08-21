@@ -15,12 +15,12 @@ public:
                               const QString &pattern,
                               QObject *parent = 0);
 
-protected:
-    void run() Q_DECL_OVERRIDE;
-
 signals:
 
 public slots:
+
+private slots:
+    void readNextScreenshot();
 
 private:
     QFileInfoList screenshotFileinfos;

@@ -19,7 +19,7 @@ public:
 signals:
 
 public slots:
-    void handleScreenshot(QImage screenshot);
+    void handleScreenshot(QImage screenshot) Q_DECL_OVERRIDE;
 
 private:
     QString filePattern;
