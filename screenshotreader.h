@@ -13,7 +13,8 @@ class ScreenshotReader : public ScreenshotInput
 public:
     explicit ScreenshotReader(const QString &indir,
                               const QString &pattern,
-                              QObject *parent = 0);
+                              QObject *parent = Q_NULLPTR);
+    void start() Q_DECL_OVERRIDE;
 
 signals:
 

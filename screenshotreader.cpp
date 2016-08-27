@@ -1,11 +1,10 @@
 #include "screenshotreader.h"
 
 #include <QtGlobal>
+#include <QtDebug>
 #include <QDir>
 #include <QImage>
 #include <QTimer>
-
-#include <QtDebug>
 
 ScreenshotReader::ScreenshotReader(const QString &indir,
                                    const QString &pattern,
@@ -14,8 +13,12 @@ ScreenshotReader::ScreenshotReader(const QString &indir,
 {
     QDir dir(indir, pattern);
     this->screenshotFileinfos = dir.entryInfoList(QDir::Files);
+}
 
+void ScreenshotReader::start()
+{
     QTimer::singleShot(0, this, SLOT(readNextScreenshot()));
+    emit ready();
 }
 
 void ScreenshotReader::readNextScreenshot()
@@ -25,7 +28,7 @@ void ScreenshotReader::readNextScreenshot()
 
     const QFileInfo & curFile = this->screenshotFileinfos.takeFirst();
 
-    qDebug(tr("Reading file %1").arg(curFile.absoluteFilePath()).toLocal8Bit().constData());
+    qDebug() << tr("Reading file %1").arg(curFile.absoluteFilePath());
 
     QImage img(curFile.absoluteFilePath());
     emit screenshotAvailable(img);

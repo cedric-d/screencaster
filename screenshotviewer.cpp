@@ -5,13 +5,24 @@
 #include <QTime>
 
 ScreenshotViewer::ScreenshotViewer(const int interval, QObject *parent) :
-    ScreenshotOutput(parent), window(0), label(new QLabel(&this->window))
+    ScreenshotOutput(parent), window(Q_NULLPTR), label(new QLabel(&this->window))
 {
     this->window.setCentralWidget(this->label);
     this->window.showFullScreen();
 
     connect(&this->timer, SIGNAL(timeout()), this, SLOT(displayNextScreenshot()));
-    this->timer.start(interval);
+    this->timer.setInterval(interval);
+}
+
+void ScreenshotViewer::start()
+{
+    this->timer.start();
+    emit ready();
+}
+
+void ScreenshotViewer::stop()
+{
+    this->timer.stop();
 }
 
 void ScreenshotViewer::handleScreenshot(QImage screenshot)

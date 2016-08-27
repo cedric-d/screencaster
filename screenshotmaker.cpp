@@ -10,7 +10,18 @@ ScreenshotMaker::ScreenshotMaker(const int interval, QObject *parent) :
     ScreenshotInput(parent), timer(this)
 {
     connect(&this->timer, SIGNAL(timeout()), this, SLOT(shoot()));
-    this->timer.start(interval);
+    this->timer.setInterval(interval);
+}
+
+void ScreenshotMaker::start()
+{
+    this->timer.start();
+    emit ready();
+}
+
+void ScreenshotMaker::stop()
+{
+    this->timer.stop();
 }
 
 void ScreenshotMaker::shoot(bool forceFull)

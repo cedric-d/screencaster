@@ -4,7 +4,7 @@
 #include "screenshotio.h"
 
 #include <QImage>
-#include <QObject>
+#include <QString>
 
 class ScreenshotWriter : public ScreenshotOutput
 {
@@ -14,7 +14,7 @@ public:
     explicit ScreenshotWriter(const QString &outdir,
                               const QString &format,
                               const QString &quality,
-                              QObject *parent = 0);
+                              QObject *parent = Q_NULLPTR);
 
 signals:
 

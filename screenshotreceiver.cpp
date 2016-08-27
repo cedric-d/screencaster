@@ -1,15 +1,36 @@
 #include "screenshotreceiver.h"
 
 #include <QtGlobal>
-#include <QtDebug>
+#include <QtEndian>
+#include <QHostInfo>
+#include <QHostAddress>
+#include <QImage>
 
-ScreenshotReceiver::ScreenshotReceiver(const QString address, const QString port, QObject *parent) :
-    QObject(parent), tcpServer(this), curConnection(0)
+ScreenshotReceiver::ScreenshotReceiver(const QString &bind, QObject *parent) :
+    ScreenshotInput(parent), tcpServer(this), curConnection(Q_NULLPTR)
 {
-    if (!this->tcpServer.listen(QHostAddress(address), port.toUInt()))
-        throw tr("Failed to start TCP server: %1").arg(this->tcpServer.errorString());
+    const QStringList &addr = bind.split(':');
+    this->bindAddr = addr[0];
+    this->bindPort = addr[1].toUShort();
+}
+
+void ScreenshotReceiver::start()
+{
+    QHostAddress addr(QHostAddress::Any);
+
+    if (!this->bindAddr.isEmpty()) {
+        const QHostInfo &info = QHostInfo::fromName(this->bindAddr);
+        if (info.addresses().isEmpty()) {
+            qDebug() << tr("Failed to resolve address %1: %2").arg(this->bindAddr, info.errorString());
+        } else {
+            addr = info.addresses().first();
+        }
+    }
 
     connect(&this->tcpServer, SIGNAL(newConnection()), this, SLOT(handleNewConnection()));
+
+    if (!this->tcpServer.listen(addr, this->bindPort))
+        qDebug() << tr("Failed to start TCP server: %1").arg(this->tcpServer.errorString());
 }
 
 void ScreenshotReceiver::handleNewConnection()
@@ -23,7 +44,53 @@ void ScreenshotReceiver::handleNewConnection()
     if (this->curConnection) {
         this->curConnection->close();
         delete this->curConnection;
+        this->curConnection = Q_NULLPTR;
     }
 
     this->curConnection = newConnection;
+
+    connect(newConnection, SIGNAL(readyRead()), this, SLOT(handleNewData()));
+
+    emit ready();
+}
+
+void ScreenshotReceiver::stop()
+{
+    if (this->curConnection) {
+        this->curConnection->close();
+        delete this->curConnection;
+        this->curConnection = Q_NULLPTR;
+    }
+
+    this->tcpServer.close();
+}
+
+void ScreenshotReceiver::handleNewData()
+{
+    if (!this->img.isEmpty()) {
+        const qint64 len = this->curConnection->read(this->img.data() + this->curSize, this->img.size() - this->curSize);
+
+        this->curSize += len;
+
+        if (this->curSize == this->img.size()) {
+            const QImage &img = QImage::fromData(this->img);
+            emit screenshotAvailable(img);
+
+            this->img.clear();
+        }
+    } else {
+        quint32 imgSize;
+
+        if (this->curConnection->bytesAvailable() < sizeof(imgSize))
+            return;
+
+        this->curConnection->read(reinterpret_cast<char *>(&imgSize), sizeof(imgSize));
+        imgSize = qFromBigEndian(imgSize);
+
+        this->img.resize(imgSize);
+        this->curSize = 0;
+    }
+
+    if (this->curConnection->bytesAvailable() > 0)
+        this->handleNewData();
 }

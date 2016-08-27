@@ -2,13 +2,14 @@
 #include "screenshotmaker.h"
 #include "screenshotreader.h"
 #include "screenshotreceiver.h"
+#include "screenshotsender.h"
+#include "screenshotviewer.h"
 #include "screenshotwriter.h"
 
 #include <QCommandLineParser>
 #include <QApplication>
 #include <QStringList>
 
-#include <QtDebug>
 
 static const QString APPLICATION_NAME = "screencaster";
 static const QString APPLICATION_VERSION = "1.0";
@@ -25,7 +26,7 @@ static const QString DEFAULT_FILE_QUALITY = "-1";
 
 
 Screencaster::Screencaster(int & argc, char *argv[]) :
-    QApplication(argc, argv), output(0), input(0)
+    QApplication(argc, argv), output(Q_NULLPTR), input(Q_NULLPTR)
 {
     this->setApplicationName(APPLICATION_NAME);
     this->setApplicationVersion(APPLICATION_VERSION);
@@ -62,6 +63,19 @@ Screencaster::Screencaster(int & argc, char *argv[]) :
 
     const QString & mode = parser.positionalArguments().value(0);
     if (mode == "receive") {
+        parser.clearPositionalArguments();
+        parser.addPositionalArgument("receive", tr("Receive mode"));
+        parser.addPositionalArgument("BIND_ADDR", tr("Receive screenshots on BIND_ADDR"));
+
+        parser.process(*this);
+
+        const QString bindAddr = parser.positionalArguments().value(1);
+        if (bindAddr.isEmpty()) {
+            qDebug() << tr("No bind address specified");
+            parser.showHelp(1);
+        }
+
+        this->input = new ScreenshotReceiver(bindAddr, this);
     } else if (mode == "read") {
         parser.clearPositionalArguments();
         parser.addPositionalArgument("read", tr("Read mode"));
@@ -79,6 +93,22 @@ Screencaster::Screencaster(int & argc, char *argv[]) :
 
         this->input = new ScreenshotReader(indir, pattern, this);
     } else if (mode == "send") {
+        parser.clearPositionalArguments();
+        parser.addPositionalArgument("send", tr("Send mode"));
+        parser.addPositionalArgument("DEST_ADDR", tr("Send screenshots to DEST_ADDR"));
+
+        parser.process(*this);
+
+        const QString destAddr = parser.positionalArguments().value(1);
+        if (destAddr.isEmpty()) {
+            qDebug() << tr("No destination specified");
+            parser.showHelp(1);
+        }
+
+        this->output = new ScreenshotSender(destAddr,
+                                            parser.value(fileFormat),
+                                            parser.value(fileQuality),
+                                            this);
     } else if (mode == "write") {
         parser.clearPositionalArguments();
         parser.addPositionalArgument("write", tr("Write mode"));
@@ -107,12 +137,30 @@ Screencaster::Screencaster(int & argc, char *argv[]) :
         this->output = new ScreenshotViewer(parser.value(period).toInt(), this);
     }
 
+    connect(this->input, SIGNAL(ready()), this, SLOT(inputReady()));
+    connect(this->output, SIGNAL(ready()), this, SLOT(outputReady()));
+
+    qDebug() << tr("Starting output...");
+    this->output->start();
+}
+
+void Screencaster::outputReady()
+{
+    qDebug() << tr("Output started, starting input...");
+
     connect(this->input, SIGNAL(screenshotAvailable(QImage)), this->output, SLOT(handleScreenshot(QImage)));
     //connect(this->input, SIGNAL(finished()), this, SLOT(quit()));
+
+    this->input->start();
+}
+
+void Screencaster::inputReady()
+{
+    qDebug() << tr("Both input and output started");
 }
 
 Screencaster::~Screencaster()
 {
-    delete this->output;
     delete this->input;
+    delete this->output;
 }

@@ -14,7 +14,9 @@ class ScreenshotViewer : public ScreenshotOutput
     Q_OBJECT
 
 public:
-    explicit ScreenshotViewer(const int interval, QObject *parent = 0);
+    explicit ScreenshotViewer(const int interval, QObject *parent = Q_NULLPTR);
+    void start() Q_DECL_OVERRIDE;
+    void stop() Q_DECL_OVERRIDE;
 
 signals:
 

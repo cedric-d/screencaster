@@ -1,9 +1,7 @@
 #ifndef SCREENCASTER_H
 #define SCREENCASTER_H
 
-#include "screenshotmaker.h"
 #include "screenshotio.h"
-#include "screenshotviewer.h"
 
 #include <QApplication>
 #include <QObject>
@@ -19,6 +17,10 @@ public:
 signals:
 
 public slots:
+
+protected slots:
+    void inputReady();
+    void outputReady();
 
 private:
     ScreenshotOutput * output;
