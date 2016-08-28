@@ -1,6 +1,7 @@
 #include "screenshotwriter.h"
 
 #include <QtGlobal>
+#include <QtDebug>
 
 const QString ScreenshotWriter::FILE_PATTERN = "screenshot%1";
 
@@ -18,7 +19,7 @@ void ScreenshotWriter::handleScreenshot(QImage screenshot)
 {
     const QString & fileName = this->filePattern.arg(this->curIndex, 4, 16, QChar('0'));
 
-    qDebug(tr("Writing file %1").arg(fileName).toLocal8Bit().constData());
+    qDebug() << tr("Writing file %1").arg(fileName);
 
     screenshot.save(fileName, this->fileFormat.toLocal8Bit().constData(), this->fileQuality);
 

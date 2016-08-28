@@ -1,6 +1,7 @@
 #include "screenshotreceiver.h"
 
 #include <QtGlobal>
+#include <QtDebug>
 #include <QtEndian>
 #include <QHostInfo>
 #include <QHostAddress>
@@ -22,7 +23,7 @@ void ScreenshotReceiver::start()
     if (!this->bindAddr.isEmpty()) {
         const QHostInfo &info = QHostInfo::fromName(this->bindAddr);
         if (info.addresses().isEmpty()) {
-            qDebug() << tr("Failed to resolve address %1: %2").arg(this->bindAddr, info.errorString());
+            qCritical() << tr("Failed to resolve address %1: %2").arg(this->bindAddr, info.errorString());
         } else {
             addr = info.addresses().first();
         }
@@ -31,7 +32,7 @@ void ScreenshotReceiver::start()
     connect(&this->tcpServer, SIGNAL(newConnection()), this, SLOT(handleNewConnection()));
 
     if (!this->tcpServer.listen(addr, this->bindPort))
-        qDebug() << tr("Failed to start TCP server: %1").arg(this->tcpServer.errorString());
+        qCritical() << tr("Failed to start TCP server: %1").arg(this->tcpServer.errorString());
 }
 
 void ScreenshotReceiver::handleNewConnection()

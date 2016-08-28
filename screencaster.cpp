@@ -6,6 +6,8 @@
 #include "screenshotviewer.h"
 #include "screenshotwriter.h"
 
+#include <QtGlobal>
+#include <QtDebug>
 #include <QCommandLineParser>
 #include <QApplication>
 #include <QStringList>
@@ -13,9 +15,6 @@
 
 static const QString APPLICATION_NAME = "screencaster";
 static const QString APPLICATION_VERSION = "1.0";
-
-static const QString DEFAULT_PORT = "1234";
-static const QString DEFAULT_BIND_ADDRESS = "0.0.0.0";
 
 static const QString DEFAULT_PATH = ".";
 
@@ -35,15 +34,6 @@ Screencaster::Screencaster(int & argc, char *argv[]) :
     parser.setApplicationDescription(tr("Periodically take screenshots"));
     parser.addHelpOption();
     parser.addVersionOption();
-
-    QCommandLineOption listenPort(QStringList() << "p" << "port",
-                                  tr("Listen connection on PORT"),
-                                  "PORT", DEFAULT_PORT);
-    QCommandLineOption listenAddr(QStringList() << "b" << "bind",
-                                  tr("Listen connection on ADDRESS"),
-                                  "ADDRESS", DEFAULT_BIND_ADDRESS);
-    parser.addOption(listenPort);
-    parser.addOption(listenAddr);
 
     QCommandLineOption period(QStringList() << "r" << "period",
                               tr("Take screenshot every PERIOD msecs"),
@@ -71,7 +61,7 @@ Screencaster::Screencaster(int & argc, char *argv[]) :
 
         const QString bindAddr = parser.positionalArguments().value(1);
         if (bindAddr.isEmpty()) {
-            qDebug() << tr("No bind address specified");
+            qCritical() << tr("No bind address specified");
             parser.showHelp(1);
         }
 
@@ -87,7 +77,7 @@ Screencaster::Screencaster(int & argc, char *argv[]) :
         const QString indir = parser.positionalArguments().value(1);
         const QString pattern = parser.positionalArguments().value(2);
         if (pattern.isEmpty()) {
-            qDebug() << tr("No file pattern specified");
+            qCritical() << tr("No file pattern specified");
             parser.showHelp(1);
         }
 
@@ -101,7 +91,7 @@ Screencaster::Screencaster(int & argc, char *argv[]) :
 
         const QString destAddr = parser.positionalArguments().value(1);
         if (destAddr.isEmpty()) {
-            qDebug() << tr("No destination specified");
+            qCritical() << tr("No destination specified");
             parser.showHelp(1);
         }
 
@@ -118,7 +108,7 @@ Screencaster::Screencaster(int & argc, char *argv[]) :
 
         const QString outdir = parser.positionalArguments().value(1);
         if (outdir.isEmpty()) {
-            qDebug() << tr("No output directory specified");
+            qCritical() << tr("No output directory specified");
             parser.showHelp(1);
         }
 
@@ -127,7 +117,7 @@ Screencaster::Screencaster(int & argc, char *argv[]) :
                                             parser.value(fileQuality),
                                             this);
     } else {
-        qDebug() << tr("Bad arguments");
+        qCritical() << tr("Bad arguments");
         parser.showHelp(1);;
     }
 

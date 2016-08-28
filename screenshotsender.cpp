@@ -1,6 +1,7 @@
 #include "screenshotsender.h"
 
 #include <QtGlobal>
+#include <QtDebug>
 #include <QtEndian>
 #include <QBuffer>
 #include <QImageWriter>
@@ -41,7 +42,7 @@ void ScreenshotSender::connected()
 
 void ScreenshotSender::error()
 {
-    qDebug() << tr("Failed to connect to %1: %2").arg(this->socket.peerName(), this->socket.errorString());
+    qCritical() << tr("Failed to connect to %1: %2").arg(this->socket.peerName(), this->socket.errorString());
 }
 
 void ScreenshotSender::handleScreenshot(QImage screenshot)
@@ -51,7 +52,7 @@ void ScreenshotSender::handleScreenshot(QImage screenshot)
     QImageWriter writer(&img, this->imgFormat.toLocal8Bit());
     writer.setQuality(this->imgQuality);
     if (!writer.write(screenshot)) {
-        qDebug() << tr("Failed to create image: %1").arg(writer.errorString());
+        qCritical() << tr("Failed to create image: %1").arg(writer.errorString());
         return;
     }
     img.close();

@@ -1,6 +1,7 @@
 #include "screenshotmaker.h"
 
 #include <QtGlobal>
+#include <QtDebug>
 #include <QGuiApplication>
 #include <QPixmap>
 #include <QScreen>
@@ -35,7 +36,7 @@ void ScreenshotMaker::shoot(bool forceFull)
     QImage screenshot = screen->grabWindow(0).toImage();
     const QTime &timestamp = QTime::currentTime();
 
-    qDebug(tr("Screenshot taken at %1").arg(QTime::currentTime().toString("HH:mm:ss.zzz")).toLocal8Bit().constData());
+    qDebug() << tr("Screenshot taken at %1").arg(QTime::currentTime().toString("HH:mm:ss.zzz"));
 
     // create full screenshot if asked or no previous
     Screenshot curScreenshot;

@@ -1,5 +1,8 @@
 #include "screenshotviewer.h"
 
+#include <QtGlobal>
+#include <QtDebug>
+#include <QtEndian>
 #include <QPainter>
 #include <QPoint>
 #include <QTime>
@@ -37,7 +40,7 @@ void ScreenshotViewer::displayNextScreenshot()
 
     const QImage & screenshot = this->queue.takeFirst();
 
-    qDebug(tr("Displaying screenshot taken at %1").arg(screenshot.text("timestamp")).toLocal8Bit().constData());
+    qDebug() << tr("Displaying screenshot taken at %1").arg(screenshot.text("timestamp"));
 
     if (this->pixmap.isNull()) {
         this->pixmap = QPixmap::fromImage(screenshot);
