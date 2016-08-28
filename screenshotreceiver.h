@@ -33,7 +33,9 @@ private:
     QTcpServer tcpServer;
     QTcpSocket * curConnection;
     QByteArray img;
-    quint32 curSize;
+    QByteArray metadata;
+    int curImgSize;
+    int curMetadataSize;
 };
 
 #endif // SCREENSHOTRECEIVER_H

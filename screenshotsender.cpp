@@ -3,6 +3,7 @@
 #include <QtGlobal>
 #include <QtEndian>
 #include <QBuffer>
+#include <QImageWriter>
 #include <QStringList>
 
 ScreenshotSender::ScreenshotSender(const QString &destination,
@@ -47,10 +48,30 @@ void ScreenshotSender::handleScreenshot(QImage screenshot)
 {
     QBuffer img(this);
     img.open(QIODevice::WriteOnly);
-    screenshot.save(&img, this->imgFormat.toLocal8Bit().constData(), this->imgQuality);
+    QImageWriter writer(&img, this->imgFormat.toLocal8Bit());
+    writer.setQuality(this->imgQuality);
+    if (!writer.write(screenshot)) {
+        qDebug() << tr("Failed to create image: %1").arg(writer.errorString());
+        return;
+    }
     img.close();
 
-    const quint32 imgSize = qToBigEndian(quint32(img.buffer().size()));
+    quint32 imgSize = img.buffer().size();
+    QByteArray metadata;
+    // store metadata size in upper byte if not handled by the format
+    if (!writer.supportsOption(QImageIOHandler::Description)) {
+        QStringList metadataList;
+        metadataList.append(screenshot.text("timestamp"));
+        metadataList.append(screenshot.text("xpos"));
+        metadataList.append(screenshot.text("ypos"));
+        const QString &metadataString = metadataList.join("|");
+        metadata = metadataString.toUtf8();
+        imgSize |= quint32(metadata.size()) << 24;
+    }
+    imgSize = qToBigEndian(imgSize);
     this->socket.write(reinterpret_cast<const char *>(&imgSize), sizeof(imgSize));
+    this->socket.write(metadata);
     this->socket.write(img.buffer());
+
+    qDebug() << tr("%1 bytes sent").arg(img.buffer().size() + metadata.size());
 }

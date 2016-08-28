@@ -5,6 +5,7 @@
 #include <QHostInfo>
 #include <QHostAddress>
 #include <QImage>
+#include <QStringList>
 
 ScreenshotReceiver::ScreenshotReceiver(const QString &bind, QObject *parent) :
     ScreenshotInput(parent), tcpServer(this), curConnection(Q_NULLPTR)
@@ -67,17 +68,14 @@ void ScreenshotReceiver::stop()
 
 void ScreenshotReceiver::handleNewData()
 {
-    if (!this->img.isEmpty()) {
-        const qint64 len = this->curConnection->read(this->img.data() + this->curSize, this->img.size() - this->curSize);
-
-        this->curSize += len;
-
-        if (this->curSize == this->img.size()) {
-            const QImage &img = QImage::fromData(this->img);
-            emit screenshotAvailable(img);
-
-            this->img.clear();
-        }
+    if (!this->metadata.isEmpty() && this->curMetadataSize < this->metadata.size()) {
+        const qint64 len = this->curConnection->read(this->metadata.data() + this->curMetadataSize,
+                                                     this->metadata.size() - this->curMetadataSize);
+        this->curMetadataSize += len;
+    } else if (!this->img.isEmpty()) {
+        const qint64 len = this->curConnection->read(this->img.data() + this->curImgSize,
+                                                     this->img.size() - this->curImgSize);
+        this->curImgSize += len;
     } else {
         quint32 imgSize;
 
@@ -87,8 +85,26 @@ void ScreenshotReceiver::handleNewData()
         this->curConnection->read(reinterpret_cast<char *>(&imgSize), sizeof(imgSize));
         imgSize = qFromBigEndian(imgSize);
 
-        this->img.resize(imgSize);
-        this->curSize = 0;
+        this->img.resize(imgSize & 0x00ffffff);
+        this->metadata.resize((imgSize >> 24) & 0xff);
+        this->curImgSize = 0;
+        this->curMetadataSize = 0;
+
+        qDebug() << tr("Reading %1 bytes").arg(this->img.size() + this->metadata.size());
+    }
+
+    if (this->curImgSize == this->img.size()) {
+        QImage img = QImage::fromData(this->img);
+        if (!this->metadata.isEmpty()) {
+            const QStringList &metadataList = QString::fromUtf8(this->metadata).split("|");
+            img.setText("timestamp", metadataList.value(0));
+            img.setText("xpos", metadataList.value(1));
+            img.setText("ypos", metadataList.value(2));
+        }
+        emit screenshotAvailable(img);
+
+        this->img.clear();
+        this->metadata.clear();
     }
 
     if (this->curConnection->bytesAvailable() > 0)
