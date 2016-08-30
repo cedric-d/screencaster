@@ -2,6 +2,8 @@ QT += gui network widgets
 
 TARGET = screencaster
 
+QMAKE_CXXFLAGS += -march=native
+
 LIBS += -lwebp
 
 HEADERS += \
