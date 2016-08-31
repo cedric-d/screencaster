@@ -10,7 +10,6 @@
 #include <xmmintrin.h>
 #include <emmintrin.h>
 #include <immintrin.h>
-#include <cpuid.h>
 
 typedef void (*ImageCompare)(const QImage &refImg, const QImage &newImg, QImage &resImg);
 
@@ -29,23 +28,24 @@ static ImageCompare compareImage = compareImage_generic;
 
 static void detectCPU()
 {
-    unsigned int eax, ebx, ecx, edx;
+#if defined(__x86_64__) || defined(__i386__)
+    __builtin_cpu_init();
+#endif
 
 #ifdef __AVX512F__
-    if (__get_cpuid(7, &eax, &ebx, &ecx, &edx) && (ebx & bit_AVX512F)) {
+    if (__builtin_cpu_supports("avx512f")) {
         compareImage = compareImage_avx512;
         qDebug() << "Using AVX512 image comparison code";
     } else
 #endif
 #if defined(__AVX__ ) && defined(__AVX2__)
-    if (__get_cpuid(1, &eax, &ebx, &ecx, &edx) && (ecx & bit_AVX)
-        && __get_cpuid(7, &eax, &ebx, &ecx, &edx) && (ebx & bit_AVX2)) {
+    if (__builtin_cpu_supports("avx") && __builtin_cpu_supports("avx2")) {
         compareImage = compareImage_avx2;
         qDebug() << "Using AVX2 image comparison code";
     } else
 #endif
 #ifdef __SSE2__
-    if (__get_cpuid(1, &eax, &ebx, &ecx, &edx) && (edx & bit_SSE2)) {
+    if (__builtin_cpu_supports("sse2")) {
         compareImage = compareImage_sse2;
         qDebug() << "Using SSE2 image comparison code";
     } else
